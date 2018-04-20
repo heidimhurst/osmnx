@@ -458,7 +458,7 @@ def plot_graph_route(G, route, bbox=None, fig_height=6, fig_width=None,
     ----------
     G : networkx multidigraph
     route : list
-        the route as a list of nodes
+        the route as a list of nodes, or a list of lists of nodes
     bbox : tuple
         bounding box as north,south,east,west - if None will calculate from
         spatial extents of data. if passing a bbox, you probably also want to
@@ -544,55 +544,67 @@ def plot_graph_route(G, route, bbox=None, fig_height=6, fig_width=None,
                          edge_color=edge_color, edge_linewidth=edge_linewidth,
                          edge_alpha=edge_alpha, use_geom=use_geom)
 
-    # the origin and destination nodes are the first and last nodes in the route
-    origin_node = route[0]
-    destination_node = route[-1]
+    # determine if route is single route or multiple
+    if all(isinstance(el, list) for el in route):
+        nroute = len(route)
+    # contains a single route - not valid
+    elif any(isinstance(el, list) for el in route):
+        # TODO: return error
+        nroute = 0
+    elif isinstance(route,list):
+        nroute = 1
+        route = [route]
 
-    if origin_point is None or destination_point is None:
-        # if caller didn't pass points, use the first and last node in route as
-        # origin/destination
-        origin_destination_lats = (G.nodes[origin_node]['y'], G.nodes[destination_node]['y'])
-        origin_destination_lons = (G.nodes[origin_node]['x'], G.nodes[destination_node]['x'])
-    else:
-        # otherwise, use the passed points as origin/destination
-        origin_destination_lats = (origin_point[0], destination_point[0])
-        origin_destination_lons = (origin_point[1], destination_point[1])
-        orig_dest_node_color = orig_dest_point_color
+    for i in range(nroute):
+        plot_route = route[i]
+        # the origin and destination nodes are the first and last nodes in the route
+        origin_node = plot_route[0]
+        destination_node = plot_route[-1]
 
-    # scatter the origin and destination points
-    ax.scatter(origin_destination_lons, origin_destination_lats, s=orig_dest_node_size,
-               c=orig_dest_node_color, alpha=orig_dest_node_alpha, edgecolor=node_edgecolor, zorder=4)
-
-    # plot the route lines
-    edge_nodes = list(zip(route[:-1], route[1:]))
-    lines = []
-    for u, v in edge_nodes:
-        # if there are parallel edges, select the shortest in length
-        data = min(G.get_edge_data(u, v).values(), key=lambda x: x['length'])
-
-        # if it has a geometry attribute (ie, a list of line segments)
-        if 'geometry' in data and use_geom:
-            # add them to the list of lines to plot
-            xs, ys = data['geometry'].xy
-            lines.append(list(zip(xs, ys)))
+        if origin_point is None or destination_point is None:
+            # if caller didn't pass points, use the first and last node in route as
+            # origin/destination
+            origin_destination_lats = (G.nodes[origin_node]['y'], G.nodes[destination_node]['y'])
+            origin_destination_lons = (G.nodes[origin_node]['x'], G.nodes[destination_node]['x'])
         else:
-            # if it doesn't have a geometry attribute, the edge is a straight
-            # line from node to node
-            x1 = G.nodes[u]['x']
-            y1 = G.nodes[u]['y']
-            x2 = G.nodes[v]['x']
-            y2 = G.nodes[v]['y']
-            line = [(x1, y1), (x2, y2)]
-            lines.append(line)
+            # otherwise, use the passed points as origin/destination
+            origin_destination_lats = (origin_point[0], destination_point[0])
+            origin_destination_lons = (origin_point[1], destination_point[1])
+            orig_dest_node_color = orig_dest_point_color
 
-    # add the lines to the axis as a linecollection
-    lc = LineCollection(lines, colors=route_color, linewidths=route_linewidth, alpha=route_alpha, zorder=3)
-    ax.add_collection(lc)
+        # scatter the origin and destination points
+        ax.scatter(origin_destination_lons, origin_destination_lats, s=orig_dest_node_size,
+                   c=orig_dest_node_color, alpha=orig_dest_node_alpha, edgecolor=node_edgecolor, zorder=4)
+
+        # plot the route lines
+        edge_nodes = list(zip(plot_route[:-1], plot_route[1:]))
+        lines = []
+        for u, v in edge_nodes:
+            # if there are parallel edges, select the shortest in length
+            data = min(G.get_edge_data(u, v).values(), key=lambda x: x['length'])
+
+            # if it has a geometry attribute (ie, a list of line segments)
+            if 'geometry' in data and use_geom:
+                # add them to the list of lines to plot
+                xs, ys = data['geometry'].xy
+                lines.append(list(zip(xs, ys)))
+            else:
+                # if it doesn't have a geometry attribute, the edge is a straight
+                # line from node to node
+                x1 = G.nodes[u]['x']
+                y1 = G.nodes[u]['y']
+                x2 = G.nodes[v]['x']
+                y2 = G.nodes[v]['y']
+                line = [(x1, y1), (x2, y2)]
+                lines.append(line)
+
+        # add the lines to the axis as a linecollection
+        lc = LineCollection(lines, colors=route_color, linewidths=route_linewidth, alpha=route_alpha, zorder=3)
+        ax.add_collection(lc)
 
     # save and show the figure as specified
     fig, ax = save_and_show(fig, ax, save, show, close, filename, file_format, dpi, axis_off)
     return fig, ax
-
 
 def make_folium_polyline(edge, edge_color, edge_width, edge_opacity, popup_attribute=None):
 

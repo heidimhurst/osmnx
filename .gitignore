@@ -41,6 +41,8 @@ tests/run_tests.bat
 ehthumbs.db
 Thumbs.db
 
+# .idea files
+.idea/
 
 
 # Byte-compiled / optimized / DLL files
