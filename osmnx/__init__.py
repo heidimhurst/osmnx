@@ -16,5 +16,6 @@ from .save_load import *
 from .simplify import *
 from .stats import *
 from .utils import *
+from .route import *
 
 __version__ = '0.8dev'

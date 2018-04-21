@@ -282,7 +282,6 @@ def induce_subgraph(G, node_subset):
     return G2
 
 
-
 def get_largest_component(G, strongly=False):
     """
     Return a subgraph of the largest weakly or strongly connected component
