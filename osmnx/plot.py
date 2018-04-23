@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import logging as lg
 from matplotlib.collections import LineCollection
 from descartes import PolygonPatch
 from shapely.geometry import Polygon
@@ -450,7 +451,7 @@ def plot_graph_route(G, route, bbox=None, fig_height=6, fig_width=None,
                      destination_point=None, route_color='r', route_linewidth=4,
                      route_alpha=0.5, orig_dest_node_alpha=0.5,
                      orig_dest_node_size=100, orig_dest_node_color='r',
-                     orig_dest_point_color='b'):
+                     orig_dest_point_color='b', ignore_one_way = True):
     """
     Plot a route along a networkx spatial graph.
 
@@ -528,6 +529,8 @@ def plot_graph_route(G, route, bbox=None, fig_height=6, fig_width=None,
     orig_dest_point_color : string
         the color of the origin and destination points if being plotted instead
         of nodes
+    ignore_one_way : bool
+        treat all streets as two way (allow route segments that go against the grain)
 
     Returns
     -------
@@ -551,7 +554,8 @@ def plot_graph_route(G, route, bbox=None, fig_height=6, fig_width=None,
     elif any(isinstance(el, list) for el in route):
         # TODO: return error
         nroute = 0
-    elif isinstance(route,list):
+        log("Incorrect formatting for route graphing.  Ensure route is a single list or list of lists.", level=lg.WARNING)
+    elif isinstance(route, list):
         nroute = 1
         route = [route]
 
@@ -581,9 +585,20 @@ def plot_graph_route(G, route, bbox=None, fig_height=6, fig_width=None,
         lines = []
         for u, v in edge_nodes:
             # if there are parallel edges, select the shortest in length
-            data = min(G.get_edge_data(u, v).values(), key=lambda x: x['length'])
+            # NOTE: jank fix to allow traversal of oneway nodes
+            # todo: something that's not this about one way nodes
+            if ignore_one_way:
+                try:
+                    data = min(G.get_edge_data(u, v).values(), key=lambda x: x['length'])
+                except AttributeError:
+                    try:
+                        data = min(G.get_edge_data(v, u).values(), key=lambda x: x['length'])
+                    except AttributeError:
+                        data = {}
+            else:
+                data = min(G.get_edge_data(u, v).values(), key=lambda x: x['length'])
 
-            # if it has a geometry attribute (ie, a list of line segments)
+            # if it has a geometry attribute (ie, a list of line segments) mod
             if 'geometry' in data and use_geom:
                 # add them to the list of lines to plot
                 xs, ys = data['geometry'].xy
@@ -760,7 +775,7 @@ def plot_route_folium(G, route, route_map=None, popup_attribute=None,
     # create gdf of the route edges
     gdf_edges = graph_to_gdfs(G, nodes=False, fill_edge_geometry=True)
     route_nodes = list(zip(route[:-1], route[1:]))
-    index = [gdf_edges[(gdf_edges['u']==u) & (gdf_edges['v']==v)].index[0] for u, v in route_nodes]
+    index = [gdf_edges[(gdf_edges['u'] == u) & (gdf_edges['v'] == v)].index[0] for u, v in route_nodes]
     gdf_route_edges = gdf_edges.loc[index]
 
     # get route centroid

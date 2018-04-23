@@ -177,13 +177,13 @@ def match_request(url, pause_duration=None, timeout=180, error_pause_duration=No
             return response_json
 
 
-def reset_frequency(g):
+def reset_frequency(graph):
     """
     Add dummy frequency field to all edges, set to 0.
 
     Parameters
     ----------
-    G : networkx graph object
+    graph : networkx graph object
         graph object representing area of interest
 
     Returns
@@ -191,7 +191,7 @@ def reset_frequency(g):
     none
     """
     # create frequency field and set to zero
-    nx.set_edge_attributes(g, name='frequency', values=0)
+    nx.set_edge_attributes(graph, name='frequency', values=0)
 
 
 def request_url(lat, lon, maxpoints=0):
@@ -260,7 +260,7 @@ def edges_from_matchings(matching):
                 # Extract all node sets
                 node = leg['annotation']['nodes']
                 for i in range(len(node) - 1):
-                    if (node[i],node[i+1],0) not in edges:
+                    if (node[i], node[i+1], 0) not in edges:
                         edges.append((node[i], node[i+1], 0))
     return edges
 
@@ -336,7 +336,9 @@ def freq_from_folder(filepath, freq={}, npoints=100):
             # use try/catch to avoid key errors where 'matchings' isn't in json
             try:
                 freq = frequency_dict_from_matchings(resp['matchings'], freq)
-            except KeyError:
+            # todo: make exception handling less general
+            # todo: handling for requests that are too large
+            except Exception:
                 freq = freq
     return freq
 
