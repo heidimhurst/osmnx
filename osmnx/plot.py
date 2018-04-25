@@ -621,6 +621,7 @@ def plot_graph_route(G, route, bbox=None, fig_height=6, fig_width=None,
     fig, ax = save_and_show(fig, ax, save, show, close, filename, file_format, dpi, axis_off)
     return fig, ax
 
+
 def make_folium_polyline(edge, edge_color, edge_width, edge_opacity, popup_attribute=None):
 
     """
