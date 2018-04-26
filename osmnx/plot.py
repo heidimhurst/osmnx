@@ -622,7 +622,7 @@ def plot_graph_route(G, route, bbox=None, fig_height=6, fig_width=None,
     return fig, ax
 
 
-def make_folium_polyline(edge, edge_color, edge_width, edge_opacity, popup_attribute=None):
+def make_folium_polyline(edge, edge_color='#333333', edge_width=5, edge_opacity=1, popup_attribute=None):
 
     """
     Turn a row from the gdf_edges GeoDataFrame into a folium PolyLine with
@@ -734,6 +734,63 @@ def plot_graph_folium(G, graph_map=None, popup_attribute=None,
         graph_map.fit_bounds(bounds)
 
     return graph_map
+
+
+def plot_freq_folium(G, freq={}, popup_attribute=None,
+                     tiles='cartodbpositron', zoom=1, fit_bounds=True,
+                     edge_color='#333333', edge_width=5, edge_opacity=1):
+    """
+    This function is UNDER DEVELOPMENT.
+
+    Objective is to plot a passed in frequency map based on OSM Node IDs showing which edges have been
+    most commonly traversed.
+
+        Parameters
+    ----------
+    G : networkx multidigraph
+    freq : dictionary
+        frequency dictionary containing information on how many times an edge has been traversed
+    popup_attribute : string
+        edge attribute to display in a pop-up when an edge is clicked
+    tiles : string
+        name of a folium tileset
+    zoom : int
+        initial zoom level for the map
+    fit_bounds : bool
+        if True, fit the map to the boundaries of the route's edges
+    edge_color : string
+        color of the edge lines
+    edge_width : numeric
+        width of the edge lines
+    edge_opacity : numeric
+        opacity of the edge lines
+
+    Returns
+    -------
+    graph_map : folium.folium.Map
+
+    """
+    # todo: fix
+    # check if we were able to import folium successfully
+    if not folium:
+        raise ImportError('The folium package must be installed to use this optional feature.')
+
+    # create gdf of the route edges
+    gdf_edges = graph_to_gdfs(G, nodes=False, fill_edge_geometry=True)
+
+    # read in frequency keys to list
+    pts = []
+    for k in freq.keys():
+        pts.append((k[0], k[1]))
+
+    index = [gdf_edges[(gdf_edges['u'] == u) & (gdf_edges['v'] == v)].index[0] for u, v in pts]
+    gdf_freq_edges = gdf_edges.loc[index]
+
+    # get frequency distn centroid
+    x, y = gdf_freq_edges.unary_union.centroid.xy
+    freq_centroid = (y[0], x[0])
+
+    return freq_map
 
 
 def plot_route_folium(G, route, route_map=None, popup_attribute=None,

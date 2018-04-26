@@ -7,7 +7,6 @@
 ################################################################################
 
 import gpxpy
-import datetime
 import requests
 import time
 import re
@@ -61,40 +60,6 @@ def parse_gpx(filepath):
     return lat, lon, time
 
 
-# def request_url(lat, lon, maxpoints=0):
-#     """
-#     Convert lat and lon to a url query string.
-#
-#     Converts lat and lon to a query string using osrm router.
-#
-#     Parameters
-#     ----------
-#     lat : list
-#         ordered list of all latitudes
-#     lon : list
-#         ordered list of all longitudes
-#     maxpoints: int
-#         maximum number of points to be included, defaults to all
-#
-#     Returns
-#     -------
-#     url : string
-#         query url to be used for osrm routing
-#     """
-#     # how many points should we include? can we include all of them?
-#     baseurl = 'http://router.project-osrm.org/match/v1/walking/'
-#     options = '?overview=full&annotations=true'
-#
-#     coords = ''
-#     # pick every nth coordinate up to maxpoints
-#     npoints = len(lat) % maxpoints
-#     point_interval = int(len(lat)/max(npoints,1))
-#     for i in range(npoints):
-#         coords += str(lon[i*point_interval]) + ',' + str(lat[i*point_interval]) + ';'
-#
-#    return baseurl + coords[:-1] + options
-
-
 def match_request(url, pause_duration=None, timeout=180, error_pause_duration=None):
     """
     Send a request to the Overpass API via HTTP POST and return the JSON
@@ -102,8 +67,8 @@ def match_request(url, pause_duration=None, timeout=180, error_pause_duration=No
 
     Parameters
     ----------
-    data : dict or OrderedDict
-        key-value pairs of parameters to post to the API
+    url : string
+        fully formed URL to which the request will be sent
     pause_duration : int
         how long to pause in seconds before requests, if None, will query API
         status endpoint to find when next slot is available
@@ -351,7 +316,7 @@ def edge_frequency_dictionary(edges, freq = {}):
     ----------
     edges : list
         list of edge tuples in the format (start node, end node, 0)
-    frequency : dictionary
+    freq : dictionary
         dictionary of frequencies, with edge tuples as keys in the
         format (start node, end node, 0) and frequency as integer values
         defaults to empty dictionary
@@ -372,10 +337,10 @@ def edge_frequency_dictionary(edges, freq = {}):
 
 
 def edges_from_route(route):
-    '''
-    Convertes route comprised of list of nodes into list of touples for use in other algorithms.
+    """
+    Converts route comprised of list of nodes into list of touples for use in other algorithms.
 
-    Paremeters
+    Parameters
     ----------
     route : list
         ordered list of nodes
@@ -383,8 +348,8 @@ def edges_from_route(route):
     Returns
     -------
     edges : list
-        of edge touples (start node, end node, 0)
-    '''
+        of edge tuples (start node, end node, 0)
+    """
 
     edges = []
     for i in range(len(route) - 1):

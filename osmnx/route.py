@@ -49,7 +49,7 @@ def novelty_score(graph, route, freq={}):
 
 def seg_attribute(graph, start, finish, attribute='length'):
     """
-    Used to work around oneway streets, returns value of attribute for edge.
+    Used to work around one way streets; returns value of attribute for edge.
 
     Parameters
     ----------
@@ -171,8 +171,6 @@ def evaluate_edges(graph, route, freq={}, eval_function=lambda x: x['length'], p
     suitability = []
     n_edge = []
 
-    log(adj_edges)
-
     # for each edge, query edge attributes
     for edge in adj_edges:
         log("Testing edge {}".format(edge))
@@ -211,6 +209,29 @@ def evaluate_edges(graph, route, freq={}, eval_function=lambda x: x['length'], p
 
 
 def outbound_optimization(attributes={}, importance=[0.3, 0.3, 0.25, 0.1, 0.05], pct_remaining=0, *args):
+    """
+    This is the core function for outbound optimization.
+
+    Provided with a dictionary of attributes for an edge, this section scores each attribute and takes a weighted
+    average of attribute weights.  The resultant score ranges from 1 to 10 and describes how good of a fit the
+    edge in question is for the given route objectives.
+
+    Parameters
+    ----------
+    attributes : dictionary
+        contains attributes of each edge, including at minimum ['bearing','traveled','frequency','length']
+
+    importance : list
+        list of floats containing relative importance of traveled, frequency, previous_bearing,
+        home_bearing, and length (in that order).  Should, but does not have to, sum to 1.
+
+    pct_remaining : 0
+        dummy variable to facilitate inbound_optimization; should be removed in future iterations
+
+    Returns
+    -------
+    suitability : float
+    """
 
     # setup mapping for previous bearing
     if 'previous_bearing' in attributes.keys():
@@ -269,6 +290,31 @@ def next_outbound_node(graph, route, freq={}, *args, **kwargs):
 
 
 def inbound_optimization(attributes={}, importance=[0.3, 0.3, 0.20, 0.1], pct_remaining=0):
+    """
+    This is the core function for inbound optimization.
+
+    Provided with a dictionary of attributes for an edge, this section scores each attribute and takes a weighted
+    average of attribute weights.  The resultant score ranges from 1 to 10 and describes how good of a fit the
+    edge in question is for the given route objectives.  This value changes depending on what percent of the route
+    remains; as the route length reaches the goal length, more importance is placed on selecting edges that take
+    the user towards home.
+
+    Parameters
+    ----------
+    attributes : dictionary
+        contains attributes of each edge, including at minimum ['bearing','traveled','frequency','length']
+
+    importance : list
+        list of floats containing relative importance of traveled, frequency, previous_bearing,
+        and length (in that order).  Should, but does not have to, sum to 1.
+
+    pct_remaining : 0
+        what percent of the route goal length is remaining?
+
+    Returns
+    -------
+    suitability : float
+    """
 
     # setup mapping for previous bearing
     if 'previous_bearing' in attributes.keys():
